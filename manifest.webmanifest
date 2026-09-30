@@ -1,9 +1,0 @@
-{
-  "name": "La droite dans l'espace",
-  "short_name": "Droite 3D",
-  "start_url": "./",
-  "display": "standalone",
-  "background_color": "#120e1b",
-  "theme_color": "#120e1b",
-  "icons": [{"src": "icone.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any"}]
-}
