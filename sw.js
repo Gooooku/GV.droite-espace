@@ -1,6 +1,6 @@
 // Mise en cache pour un fonctionnement hors connexion
-const CACHE = 'droite-espace-v1';
-const FILES = ['./', 'index.html', 'theorie.html', 'drones.html', 'rayon.html', 'lib/three.min.js', 'lib/OrbitControls.js', 'lib/RoomEnvironment.js', 'manifest.webmanifest', 'icone.svg'];
+const CACHE = 'droite-espace-v2';
+const FILES = ['./', 'index.html', 'theorie.html', 'drones.html', 'rayon.html', 'three.min.js', 'OrbitControls.js', 'RoomEnvironment.js', 'manifest.webmanifest', 'icone.svg'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', e => {
