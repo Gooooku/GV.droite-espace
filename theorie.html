@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icone.svg">
+<link rel="apple-touch-icon" href="icone.svg">
+<meta name="theme-color" content="#120e1b">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>La droite dans l'espace, point par point (avec voix)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link id="gf" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&family=STIX+Two+Text:ital,wght@1,500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg1:#0a0f22; --bg2:#1a2150; --ink:#eef1ff; --muted:#8e97c4; --glass:rgba(255,255,255,.06); --stroke:rgba(255,255,255,.14);
+  --x:#ff7a85; --y:#5ee3a1; --z:#6fa8ff; --A:#ffc857; --v:#3ee6ff; --P:#ff4fa3; --B:#b69cff; --grid:#3a4478;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg1:#f4f6ff; --bg2:#dfe4fb; --ink:#141a3a; --muted:#5a6390; --glass:rgba(255,255,255,.7); --stroke:rgba(20,26,58,.12);
+    --x:#e2404f; --y:#12a36a; --z:#2f6fe0; --A:#c98a00; --v:#0098c7; --P:#d81b7a; --B:#7c4ddb; --grid:#b8c0e6;
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"]{
+  --bg1:#f4f6ff; --bg2:#dfe4fb; --ink:#141a3a; --muted:#5a6390; --glass:rgba(255,255,255,.7); --stroke:rgba(20,26,58,.12);
+  --x:#e2404f; --y:#12a36a; --z:#2f6fe0; --A:#c98a00; --v:#0098c7; --P:#d81b7a; --B:#7c4ddb; --grid:#b8c0e6;
+  color-scheme: light;
+}
+:root{ box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px); }
+*,*::before,*::after{ box-sizing:inherit; }
+html{ height:100%; scroll-padding-top:env(safe-area-inset-top,0px); }
+body{ height:100%; margin:0; background:var(--bg1); color:var(--ink); overflow:hidden;
+  font-family:"Manrope", system-ui, -apple-system, "Segoe UI", sans-serif; }
+.m{ font-family:"STIX Two Text","Cambria Math","Times New Roman",serif; font-style:italic; font-weight:500; }
+.stage{ position:relative; width:100%; height:100%; overflow:hidden; touch-action:none;
+  background: radial-gradient(120% 90% at 70% 20%, var(--bg2) 0%, var(--bg1) 62%); --u:min(1vw, 1.78vh); }
+canvas{ position:absolute; inset:0; display:block; width:100%; height:100%; }
+#labels{ position:absolute; inset:0; pointer-events:none; }
+.lb{ position:absolute; transform:translate(-50%,-50%); font-weight:600; font-size:calc(var(--u)*1.9); white-space:nowrap; }
+.lb.small{ font-size:calc(var(--u)*1.25); font-weight:600; color:var(--P); opacity:.9; }
+.lb .m{ font-size:1.15em; }
+
+.title{ position:absolute; inset:0; display:grid; place-content:center; text-align:center; pointer-events:none; transition:opacity .6s; }
+.title h1{ margin:0; font-weight:800; font-size:calc(var(--u)*5.2); letter-spacing:-.02em; line-height:1.05; }
+.title p{ margin:calc(var(--u)*1.4) 0 0; font-size:calc(var(--u)*2.2); color:var(--muted); font-weight:600; }
+
+.caption{ position:absolute; left:calc(var(--u)*4); bottom:calc(var(--u)*4.5); max-width:min(45%, 30em); pointer-events:none;
+  font-size:calc(var(--u)*2.9); font-weight:700; line-height:1.2; letter-spacing:-.01em; }
+.caption > span{ display:block; transition:opacity .35s, transform .35s; }
+.caption .bar{ display:block; width:calc(var(--u)*6); height:calc(var(--u)*.5); border-radius:99px; margin-bottom:calc(var(--u)*1.4);
+  background:linear-gradient(90deg, var(--v), var(--P)); }
+
+.card{ position:absolute; right:calc(var(--u)*3.5); bottom:calc(var(--u)*3.5); padding:calc(var(--u)*2) calc(var(--u)*2.4);
+  background:var(--glass); border:1px solid var(--stroke); border-radius:calc(var(--u)*1.8);
+  backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); font-size:calc(var(--u)*1.85); width:22.3em;
+  transition:opacity .5s, transform .5s; }
+.card .f{ font-size:1.35em; margin-bottom:calc(var(--u)*1); }
+.card .sys{ border-left:2px solid var(--muted); border-radius:12px 0 0 12px; padding:.1em 0 .1em .7em; display:grid; gap:.15em; }
+.card .data{ display:flex; flex-wrap:wrap; gap:.3em 1.4em; font-size:1.05em; font-variant-numeric:tabular-nums; }
+.card .data > div{ transition:opacity .4s; white-space:nowrap; }
+.card .eqs{ margin-top:calc(var(--u)*1.3); padding-top:calc(var(--u)*1.3); border-top:1px solid var(--stroke); overflow:hidden; }
+.vec{ position:relative; display:inline-block; }
+.vec::after{ content:"→"; position:absolute; left:52%; top:-.58em; transform:translateX(-50%); font-size:.72em; font-style:normal; line-height:1; }
+.lb .coord{ font-weight:600; font-size:.85em; }
+.cA{ color:var(--A); } .cB{ color:var(--B); }
+.vec.w::after{ transform:translateX(-50%) scaleX(2.1); }
+.card .row{ white-space:nowrap; } .cv{ color:var(--v); } .cP{ color:var(--P); }
+.card .live{ margin-top:calc(var(--u)*1.4); padding-top:calc(var(--u)*1.2); border-top:1px solid var(--stroke); font-variant-numeric:tabular-nums; }
+.card .num{ display:inline-block; min-width:2.55em; text-align:right; }
+.card .live{ white-space:nowrap; }
+.card .live b{ color:var(--P); font-weight:800; }
+.card .count{ margin-top:.4em; font-size:.8em; color:var(--muted); font-weight:600; }
+.card .count b{ color:var(--ink); font-size:1.2em; }
+
+.ctrl{ position:absolute; right:calc(var(--u)*3.5); top:calc(var(--u)*3); display:flex; gap:10px; }
+.ctrl button{ font:inherit; font-weight:700; font-size:15px; padding:10px 18px; border-radius:99px; border:1px solid var(--stroke);
+  background:var(--glass); color:var(--ink); cursor:pointer; backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); }
+.ctrl button:focus-visible{ outline:3px solid var(--v); outline-offset:2px; }
+.seek{ position:absolute; left:0; right:0; bottom:0; padding:28px calc(var(--u)*3.5) calc(var(--u)*1.2) calc(var(--u)*4); display:flex; align-items:center; gap:14px;
+  transition:opacity .25s; }
+@media (hover: hover){
+  .seek{ opacity:0; }
+  .seek:hover, .seek:has(input:focus-visible), .seek.drag{ opacity:1; }
+}
+.seek input{ flex:1; accent-color:var(--P); height:22px; cursor:pointer; }
+.seek input:focus-visible{ outline:3px solid var(--v); outline-offset:2px; }
+.seek span{ font-size:14px; font-weight:600; color:var(--muted); font-variant-numeric:tabular-nums; min-width:6.5em; text-align:right; }
+body:not(.rec) .card{ bottom:calc(var(--u)*3.5 + 26px); }
+body:not(.rec) .caption{ bottom:calc(var(--u)*4.5 + 26px); }
+.rec .ctrl, .rec .seek{ display:none; }
+.rec *, .rec *::before{ transition:none !important; }
+
+@media (max-aspect-ratio: 1/1){
+  .stage{ --u:min(1.9vw, 1.2vh); }
+  .card{ left:calc(var(--u)*2.5); right:calc(var(--u)*2.5); top:calc(var(--u)*2.5); bottom:auto; min-width:0; width:auto; }
+  .card .eqs.g{ display:grid; grid-template-columns:auto 1fr; column-gap:1.2em; align-items:center; margin-top:calc(var(--u)*1.2); padding-top:calc(var(--u)*1.2); }
+  .card .f{ margin:0; }
+  .card .live, .card .count{ grid-column:1 / -1; }
+  .caption{ left:calc(var(--u)*3); right:calc(var(--u)*3); max-width:none; bottom:calc(var(--u)*11); font-size:calc(var(--u)*3.2); }
+  .ctrl{ left:calc(var(--u)*3); right:calc(var(--u)*3); top:auto; bottom:calc(var(--u)*3 + 34px); flex-wrap:wrap; gap:8px; }
+  .ctrl button{ padding:8px 13px; font-size:14px; }
+  .seek{ padding:10px calc(var(--u)*3) calc(var(--u)*2); }
+  body:not(.rec) .caption{ bottom:calc(var(--u)*3 + 130px); }
+  body:not(.rec) .card{ bottom:auto; }
+}
+@media (prefers-reduced-motion: reduce){ .caption span, .card, .title{ transition:none; } }
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <canvas id="c" aria-label="Animation 3D : des points s'accumulent pour former une droite"></canvas>
+  <div id="labels"></div>
+  <div class="title" id="title"><div><h1>La droite dans l'espace</h1><p>construite point par point</p></div></div>
+  <div class="card" id="card">
+    <div class="data">
+      <div id="dA"><span class="m cA">A</span><span class="cA">(1 ; 2 ; 1)</span></div>
+      <div id="dv"><span class="m cv vec">v</span> = <span class="cv">(2 ; 1 ; 1)</span></div>
+    </div>
+    <div class="eqs g" id="eqs">
+      <div class="f"><span class="m cP">P</span> = <span class="m cA">A</span> + <span class="m cP">t</span> · <span class="m cv vec">v</span></div>
+      <div class="sys">
+        <div><span class="m">x</span> = <span class="cA">1</span> + <span class="cv">2</span>·<span class="m cP">t</span></div>
+        <div><span class="m">y</span> = <span class="cA">2</span> + <span class="cv">1</span>·<span class="m cP">t</span></div>
+        <div><span class="m">z</span> = <span class="cA">1</span> + <span class="cv">1</span>·<span class="m cP">t</span></div>
+      </div>
+      <div class="live" id="live"></div>
+      <div class="count" id="count"></div>
+    </div>
+  </div>
+  <div class="title" id="title2" style="opacity:0"><div><p>Partie 2</p><h1>Trouver les équations<br>à partir de deux points</h1></div></div>
+  <div class="card" id="card2" style="opacity:0">
+    <div class="data">
+      <div id="d2A"><span class="m cA">A</span><span class="cA">(1 ; 1 ; 3)</span></div>
+      <div id="d2B"><span class="m cB">B</span><span class="cB">(3 ; 4 ; 1)</span></div>
+    </div>
+    <div class="eqs" id="vec2">
+      <div class="row"><span class="m cv vec w">AB</span> = (<span id="c0"><span class="cB">3</span> − <span class="cA">1</span></span> ; <span id="c1"><span class="cB">4</span> − <span class="cA">1</span></span> ; <span id="c2"><span class="cB">1</span> − <span class="cA">3</span></span>)</div>
+      <div class="row" style="margin-top:.35em"><span class="m cv vec">v</span> = <span class="m cv vec w">AB</span> = <span class="cv">(<span id="r0">2</span> ; <span id="r1">3</span> ; <span id="r2">−2</span>)</span></div>
+    </div>
+    <div class="eqs g" id="eq2">
+      <div class="f"><span class="m cP">P</span> = <span class="m cA" id="fPt">A</span> + <span class="m cP">t</span> · <span class="m cv vec">v</span></div>
+      <div class="sys" id="sys2">
+        <div id="L0"><span class="m">x</span> = <span id="k0" class="cA">1</span> + <span class="cv">2</span>·<span class="m cP">t</span></div>
+        <div id="L1"><span class="m">y</span> = <span id="k1" class="cA">1</span> + <span class="cv">3</span>·<span class="m cP">t</span></div>
+        <div id="L2"><span class="m">z</span> = <span id="k2" class="cA">3</span> − <span class="cv">2</span>·<span class="m cP">t</span></div>
+      </div>
+      <div class="live" id="live2">&nbsp;</div>
+      <div class="count" id="count2">&nbsp;</div>
+    </div>
+  </div>
+  <div class="caption" id="caption"><i class="bar"></i><span id="captxt"></span></div>
+  <div class="ctrl"><button id="rot" aria-pressed="false">Rotation auto : non</button><button id="voice" aria-pressed="false">Activer la voix</button><button id="sound" aria-pressed="false">Activer le son</button><button id="pause">Pause</button><button id="replay">Rejouer</button></div>
+  <div class="seek"><input type="range" id="seek" min="0" max="69" step="0.1" value="0" aria-label="Position dans l'animation"><span id="clock">0:00 / 1:09</span></div>
+</div>
+
+<script src="lib/three.min.js"></script>
+<script src="lib/OrbitControls.js"></script>
+<script>
+(function(){
+  const REC = /[?&]record/.test(location.search);
+  if (REC) document.body.classList.add('rec');
+  const A = [1,2,1], V = [2,1,1];
+  const M = (x,y,z) => new THREE.Vector3(x, z, -y);
+  const at = t => [A[0]+t*V[0], A[1]+t*V[1], A[2]+t*V[2]];
+  const Mt = t => { const p = at(t); return M(p[0],p[1],p[2]); };
+  const clamp = x => Math.max(0, Math.min(1, x));
+  const ease = x => x<.5 ? 4*x*x*x : 1-Math.pow(-2*x+2,3)/2;
+  const sine = x => -(Math.cos(Math.PI*x)-1)/2;
+  const back = x => { const c=1.7, c3=c+1; return 1 + c3*Math.pow(x-1,3) + c*Math.pow(x-1,2); };
+  const fr = n => { let s = (Math.abs(n)<0.005?0:n).toFixed(2).replace('.', ','); s = s.replace(/,00$/,'').replace(/(,\d)0$/,'$1'); return s; };
+  const num = n => '<span class="num">' + (Math.abs(n)<0.005?0:n).toFixed(2).replace('.', ',').replace('-', '−') + '</span>';
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const isDark = () => { const r = new THREE.Color(css('--bg1')); return (r.r+r.g+r.b) < 1.2; };
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ---------- scénario ----------
+  const END = 94;
+  const SLOW = 1.5; // 1 = rythme d'origine, plus grand = plus lent
+  const P1 = [0, 0.5, 1, 1.5, 2, -0.5, -1, -1.5], P1S = 12, P1D = 1.6;
+  const S1 = [25.5, 30.5, -1.5, 2.9], S2 = [31, 35.5, 2.9, -2.5];
+  function pT(T){
+    if (T < 10.5) return null;
+    if (T < P1S) return 0;
+    for (let i=0;i<P1.length;i++){ const s = P1S + P1D*i; if (T < s + P1D){ const a = i ? P1[i-1] : 0; return a + (P1[i]-a)*ease(clamp((T-s)/0.9)); } }
+    if (T < S1[0]) return P1[P1.length-1];
+    if (T < S1[1]) return S1[2] + (S1[3]-S1[2])*sine((T-S1[0])/(S1[1]-S1[0]));
+    if (T < S2[0]) return S1[3];
+    if (T < S2[1]) return S2[2] + (S2[3]-S2[2])*sine((T-S2[0])/(S2[1]-S2[0]));
+    return S2[3];
+  }
+  const dots = [];
+  const seen = new Set();
+  const key = t => Math.round(t*100);
+  P1.forEach((t,i) => { dots.push({t, time:P1S + P1D*i + 0.9, big:true}); seen.add(key(t)); });
+  function sweep(S, step){
+    const [t0,t1,a,b] = S, targets = [];
+    const lo = Math.min(a,b), hi = Math.max(a,b);
+    for (let k=Math.ceil(lo/step-1e-9); k*step<=hi+1e-9; k++){ const t = +(k*step).toFixed(2); if (!seen.has(key(t))){ seen.add(key(t)); targets.push(t); } }
+    const N = 3000;
+    targets.forEach(t => { for (let j=0;j<=N;j++){ const T = t0 + (t1-t0)*j/N, u = a + (b-a)*sine(j/N);
+      if ((b>a && u >= t-1e-6) || (b<a && u <= t+1e-6)){ dots.push({t, time:T, big:false}); break; } } });
+  }
+  sweep(S1, 0.25); sweep(S2, 0.1);
+  dots.sort((p,q) => p.time - q.time);
+
+  // ---------- partie 2 : deux points ----------
+  const T2 = 46;
+  const A2 = [1,1,3], B2 = [3,4,1], V2 = [2,3,-2];
+  const at2 = t => [A2[0]+t*V2[0], A2[1]+t*V2[1], A2[2]+t*V2[2]];
+  const Mt2 = t => { const q = at2(t); return M(q[0],q[1],q[2]); };
+  const W1 = [T2+33, T2+34.2, 1, 1.4], W2 = [T2+34.4, T2+37.4, 1.4, -1.2];
+  function pT2(T){ const r = T - T2;
+    if (r < 28) return null; if (r < 29.5) return 0; if (r < 31) return ease((r-29.5)/1.5);
+    if (T < W1[0]) return 1; if (T < W1[1]) return W1[2] + (W1[3]-W1[2])*sine((T-W1[0])/(W1[1]-W1[0]));
+    if (T < W2[0]) return W2[2]; if (T < W2[1]) return W2[2] + (W2[3]-W2[2])*sine((T-W2[0])/(W2[1]-W2[0])); return W2[3]; }
+  const dots2 = [{t:0, time:T2+28.6, big:true}, {t:1, time:T2+31, big:true}];
+  const seen2 = new Set([key(0), key(1)]);
+  [[W1, 0.1], [W2, 0.1]].forEach(([S, step]) => { const [t0,t1,a,b] = S, lo = Math.min(a,b), hi = Math.max(a,b);
+    for (let k=Math.ceil(lo/step-1e-9); k*step<=hi+1e-9; k++){ const t = +(k*step).toFixed(2); if (seen2.has(key(t))) continue; seen2.add(key(t));
+      for (let j=0;j<=2000;j++){ const u = a + (b-a)*sine(j/2000); if ((b>a && u >= t-1e-6) || (b<a && u <= t+1e-6)){ dots2.push({t, time:t0+(t1-t0)*j/2000, big:false}); break; } } } });
+  dots2.sort((p,q) => p.time - q.time);
+
+  const caps = [
+    [3,   "On part d'un point A."],
+    [6.5, 'On choisit une direction : le vecteur <span class="m vec">v</span>.'],
+    [9.5, 'Chaque valeur de <span class="m">t</span> donne un point <span class="m">P</span> = <span class="m">A</span> + <span class="m">t</span>·<span class="m vec">v</span>.'],
+    [12,  "t = 0, 0,5, 1, 1,5, 2… à chaque valeur, un nouveau point."],
+    [20,  "Avec t négatif, on part dans l'autre sens."],
+    [25.5,"Plus on prend de valeurs de t, plus les points se serrent…"],
+    [36,  "… et avec tous les t réels, ils forment la droite."],
+    [T2,      ""],
+    [T2+4.8,  "On connaît deux points de la droite : A…"],
+    [T2+7.5,  "… et B."],
+    [T2+10,   'Le vecteur <span class="m vec w">AB</span> donne la direction de la droite.'],
+    [T2+11.8, "On le calcule : coordonnées de B moins coordonnées de A."],
+    [T2+17.5, 'On obtient un vecteur directeur : <span class="m vec">v</span> = <span class="m vec w">AB</span> = (2 ; 3 ; −2).'],
+    [T2+20,   "On choisit un des deux points, par exemple A."],
+    [T2+22.3, 'On compose : coordonnées de A + composantes de <span class="m vec">v</span> fois <span class="m">t</span>.'],
+    [T2+28,   "Vérification : t = 0 donne A…"],
+    [T2+30.5, "… et t = 1 donne B."],
+    [T2+33,   "Toutes les valeurs de t forment la droite (AB)."],
+    [T2+40,   "On peut aussi partir de B : même droite, autre écriture."]
+  ];
+
+  // ---------- Three ----------
+  const stage = document.getElementById('stage'), canvas = document.getElementById('c');
+  const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true, preserveDrawingBuffer:REC});
+  renderer.setPixelRatio(REC ? 1 : Math.min(window.devicePixelRatio||1, 2));
+  renderer.setClearColor(0x000000, 0);
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(38, 16/9, 0.1, 200);
+  const target1 = M(1.5, 2, 1.2), target2 = M(2.4, 2.8, 1.6), target = target1.clone();
+  const baseOff = M(7, -13, 8.5), baseR = baseOff.length(), baseAz = Math.atan2(baseOff.x, baseOff.z), baseEl = Math.asin(baseOff.y/baseR);
+  let controls = null, userMoved = false;
+  const ROT = { on:false, clock:0, az:0, el:null, r:null };
+  if (!REC){ controls = new THREE.OrbitControls(camera, canvas); controls.enableDamping = true; controls.enablePan = false;
+    controls.minDistance = 8; controls.maxDistance = 45; controls.target.copy(target); controls.addEventListener('start', () => { userMoved = true; ROT.on = false; if (window.__rotBtn) window.__rotBtn(); }); }
+  function cameraAt(T){
+    target.copy(target1).lerp(target2, ease(clamp((T-46)/3)));
+    const intro = 1 - ease(clamp(T/5));
+    const r = baseR * (1 + 0.35*intro) * (1 - 0.08*ease(clamp((T-46)/3)));
+    const rc = REC ? T : ROT.clock;
+    const az = baseAz + 0.5*intro + (reduce ? 0 : rc*2*Math.PI/40) + ROT.az;
+    const el = ROT.el !== null ? ROT.el : baseEl + 0.12*intro + (reduce ? 0 : 0.05*Math.sin(rc*2*Math.PI/22));
+    const rr = ROT.r !== null ? ROT.r : r;
+    camera.position.set(target.x + rr*Math.cos(el)*Math.sin(az), target.y + rr*Math.sin(el), target.z + rr*Math.cos(el)*Math.cos(az));
+    camera.lookAt(target);
+  }
+
+  // texture de halo
+  const gc = document.createElement('canvas'); gc.width = gc.height = 128;
+  const g2 = gc.getContext('2d'), grd = g2.createRadialGradient(64,64,0,64,64,64);
+  grd.addColorStop(0,'rgba(255,255,255,1)'); grd.addColorStop(0.18,'rgba(255,255,255,.95)'); grd.addColorStop(0.32,'rgba(255,255,255,.35)'); grd.addColorStop(1,'rgba(255,255,255,0)');
+  g2.fillStyle = grd; g2.fillRect(0,0,128,128);
+  const glowTex = new THREE.CanvasTexture(gc);
+  function glow(size){ const s = new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex, transparent:true, depthWrite:false})); s.scale.setScalar(size); s.userData.size = size; scene.add(s); return s; }
+
+  // grille
+  let grid = null;
+  // axes : ligne fine + pointe
+  function axis(from, to){
+    const geo = new THREE.BufferGeometry().setFromPoints([from, to]);
+    const line = new THREE.Line(geo, new THREE.LineBasicMaterial({transparent:true}));
+    const d = to.clone().sub(from).normalize();
+    const cone = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.32, 18), new THREE.MeshBasicMaterial({transparent:true}));
+    cone.position.copy(to); cone.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), d);
+    const g = new THREE.Group(); g.add(line, cone); scene.add(g); g.userData = {line, cone, from, to}; return g;
+  }
+  const axX = axis(M(-3,0,0), M(6.5,0,0)), axY = axis(M(0,-2,0), M(0,6.5,0)), axZ = axis(M(0,0,-1.5), M(0,0,4.6));
+  function growAxis(ax, k){
+    const {from, to, line, cone} = ax.userData;
+    const e = from.clone().lerp(to, Math.max(0.001,k));
+    line.geometry.setFromPoints([from, e]); cone.position.copy(e); ax.visible = k > 0;
+  }
+
+  // vecteurs épais
+  const UP = new THREE.Vector3(0,1,0);
+  function arrow(r, head, opacity){
+    const mat = new THREE.MeshBasicMaterial({transparent:true, opacity, depthWrite: opacity >= 1});
+    const sg = new THREE.CylinderGeometry(r, r, 1, 16); sg.translate(0,.5,0);
+    const cg = new THREE.ConeGeometry(r*2.6, head, 24); cg.translate(0,-head/2,0);
+    const shaft = new THREE.Mesh(sg, mat), cone = new THREE.Mesh(cg, mat), g = new THREE.Group();
+    g.add(shaft, cone); g.userData = {shaft, cone, head, mat, base:opacity}; scene.add(g); return g;
+  }
+  function setArrow(g, from, to, alpha){
+    const d = to.clone().sub(from), len = d.length();
+    if (len < 0.03 || alpha <= 0.01){ g.visible = false; return; }
+    g.visible = true; g.position.copy(from); g.quaternion.setFromUnitVectors(UP, d.normalize());
+    const h = Math.min(g.userData.head, len*0.5), s = h/g.userData.head;
+    g.userData.cone.scale.setScalar(s); g.userData.cone.position.y = len; g.userData.shaft.scale.y = Math.max(0.001, len-h);
+    g.userData.mat.opacity = g.userData.base * alpha;
+  }
+  const tvArrow = arrow(0.07, 0.42, 0.28), vArrow = arrow(0.04, 0.34, 1);
+
+  // points
+  const aCore = new THREE.Mesh(new THREE.SphereGeometry(0.11, 24, 16), new THREE.MeshBasicMaterial()); scene.add(aCore);
+  const aGlow = glow(1.1);
+  const pCore = new THREE.Mesh(new THREE.SphereGeometry(0.12, 24, 16), new THREE.MeshBasicMaterial()); scene.add(pCore);
+  const pGlow = glow(1.3);
+  const ring = new THREE.Mesh(new THREE.RingGeometry(0.2, 0.235, 48), new THREE.MeshBasicMaterial({transparent:true, side:THREE.DoubleSide, depthWrite:false})); scene.add(ring);
+  const dropGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(0,1,0)]);
+  const drop = new THREE.Line(dropGeo, new THREE.LineDashedMaterial({dashSize:0.12, gapSize:0.1, transparent:true, opacity:.55})); scene.add(drop);
+  const dotSprites = dots.map(d => { const s = glow(d.big ? 0.62 : 0.46); s.position.copy(Mt(d.t)); s.visible = false; return s; });
+
+  // droite finale
+  function tube(r){ const g = new THREE.CylinderGeometry(r, r, 1, 20); g.translate(0,.5,0);
+    const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({transparent:true, opacity:0, depthWrite:false}));
+    const a = Mt(-3), b = Mt(3.3), d = b.clone().sub(a); m.position.copy(a); m.quaternion.setFromUnitVectors(UP, d.clone().normalize()); m.scale.y = d.length(); scene.add(m); return m; }
+  const lineCore = tube(0.028), lineGlow = tube(0.11);
+
+  let theme2 = null;
+  function applyTheme(){
+    const dark = isDark(), c = n => new THREE.Color(css(n)), blend = dark ? THREE.AdditiveBlending : THREE.NormalBlending;
+    [[axX,'--x'],[axY,'--y'],[axZ,'--z']].forEach(([ax,n]) => { ax.userData.line.material.color = c(n); ax.userData.cone.material.color = c(n); ax.userData.line.material.opacity = .85; });
+    aCore.material.color = c('--A'); aGlow.material.color = c('--A'); aGlow.material.blending = blend;
+    pCore.material.color = dark ? new THREE.Color('#ffffff') : c('--P'); pGlow.material.color = c('--P'); pGlow.material.blending = blend;
+    ring.material.color = c('--P'); drop.material.color = c('--P');
+    vArrow.userData.mat.color = c('--v'); tvArrow.userData.mat.color = c('--P');
+    dotSprites.forEach(s => { s.material.color = c('--P'); s.material.blending = blend; });
+    lineCore.material.color = dark ? new THREE.Color('#ffd1e8') : c('--P'); lineGlow.material.color = c('--P'); lineGlow.material.blending = blend;
+    if (grid){ scene.remove(grid); grid.geometry.dispose(); }
+    grid = new THREE.GridHelper(14, 14, c('--grid'), c('--grid')); grid.position.set(1.5, 0, -2);
+    grid.material.transparent = true; grid.material.opacity = dark ? .45 : .7; scene.add(grid);
+    if (theme2) theme2(c, dark, blend);
+    labels.forEach(l => { if (l.col) l.el.style.color = css(l.col); });
+  }
+
+  // étiquettes
+  const box = document.getElementById('labels'), labels = [];
+  function label(html, col, cls){ const el = document.createElement('div'); el.className = 'lb' + (cls ? ' '+cls : ''); el.innerHTML = html; box.appendChild(el);
+    const o = {el, col, pos:new THREE.Vector3(), a:0, dx:0, dy:0}; labels.push(o); return o; }
+  const Lx = label('<span class="m">x</span>','--x'); Lx.pos.copy(M(7.1,0,0));
+  const Ly = label('<span class="m">y</span>','--y'); Ly.pos.copy(M(0,7.1,0));
+  const Lz = label('<span class="m">z</span>','--z'); Lz.pos.copy(M(0,0,5.1));
+  const LA = label('<span class="m">A</span>','--A'); LA.pos.copy(M(1,2,1)); LA.dx = -26; LA.dy = -22;
+  const Lv = label('<span class="m vec">v</span>','--v'); Lv.dy = -26;
+  const LA_short = LA.el.innerHTML, LA_long = '<span class="m">A</span><span class="coord">(1 ; 2 ; 1)</span>';
+  const Lv_short = Lv.el.innerHTML, Lv_long = '<span class="m vec">v</span><span class="coord"> = (2 ; 1 ; 1)</span>';
+  let labelMode = null;
+  const LP = label('<span class="m">P</span>','--P'); LP.dx = 22; LP.dy = -24;
+  const dotLabels = dots.filter(d => d.big).map(d => { const l = label('<span class="m">t</span> = ' + fr(d.t), '--P', 'small'); l.pos.copy(Mt(d.t)); l.dy = 26; l.t = d; return l; });
+  const tmp = new THREE.Vector3();
+  function placeLabels(){
+    const w = stage.clientWidth, h = stage.clientHeight;
+    for (const l of labels){ tmp.copy(l.pos).project(camera); const vis = l.a > 0.01 && tmp.z < 1;
+      l.el.style.opacity = vis ? l.a : 0;
+      if (vis){ l.el.style.left = ((tmp.x+1)/2*w + l.dx) + 'px'; l.el.style.top = ((1-tmp.y)/2*h + l.dy) + 'px'; } }
+  }
+
+
+  // ---------- objets de la partie 2 ----------
+  const Q = {};
+  function ball(){ const m = new THREE.Mesh(new THREE.SphereGeometry(0.11, 24, 16), new THREE.MeshBasicMaterial()); scene.add(m); return m; }
+  Q.aCore = ball(); Q.aGlow = glow(1.1); Q.bCore = ball(); Q.bGlow = glow(1.1);
+  Q.ab = arrow(0.04, 0.34, 1);
+  function seg(r){ const g = new THREE.CylinderGeometry(r, r, 1, 12); g.translate(0,.5,0); const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({transparent:true, depthWrite:false})); scene.add(m); return m; }
+  function setSeg(m, a, b, k, alpha){ const d = b.clone().sub(a), len = d.length()*k;
+    if (len < 0.01 || alpha <= 0.01){ m.visible = false; return; } m.visible = true; m.position.copy(a); m.quaternion.setFromUnitVectors(UP, d.normalize()); m.scale.y = len; m.material.opacity = alpha; }
+  Q.sx = seg(0.03); Q.sy = seg(0.03); Q.sz = seg(0.03);
+  const C0 = M(1,1,3), C1 = M(3,1,3), C2 = M(3,4,3), C3 = M(3,4,1);
+  Q.ring = new THREE.Mesh(new THREE.RingGeometry(0.24, 0.28, 48), new THREE.MeshBasicMaterial({transparent:true, side:THREE.DoubleSide, depthWrite:false})); scene.add(Q.ring);
+  Q.dots = dots2.map(d => { const sp = glow(d.big ? 0.62 : 0.46); sp.position.copy(Mt2(d.t)); sp.visible = false; return sp; });
+  function tubeBetween(r, a, b){ const g = new THREE.CylinderGeometry(r, r, 1, 20); g.translate(0,.5,0);
+    const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({transparent:true, opacity:0, depthWrite:false})); const d = b.clone().sub(a);
+    m.position.copy(a); m.quaternion.setFromUnitVectors(UP, d.clone().normalize()); m.userData.len = d.length(); m.visible = false; scene.add(m); return m; }
+  Q.lineCore = tubeBetween(0.028, Mt2(-1.35), Mt2(1.5)); Q.lineGlow = tubeBetween(0.11, Mt2(-1.35), Mt2(1.5));
+  Q.LA = label('<span class="m">A</span><span class="coord">(1 ; 1 ; 3)</span>','--A'); Q.LA.pos.copy(C0); Q.LA.dx = -62; Q.LA.dy = -22;
+  Q.LB = label('<span class="m">B</span><span class="coord">(3 ; 4 ; 1)</span>','--B'); Q.LB.pos.copy(C3); Q.LB.dx = 64; Q.LB.dy = -20;
+  Q.LAshort = '<span class="m">A</span>'; Q.LBshort = '<span class="m">B</span>'; Q.LAlong = Q.LA.el.innerHTML; Q.LBlong = Q.LB.el.innerHTML; Q.mode = null;
+  Q.LAB = label('<span class="m vec w">AB</span>','--v'); Q.LAB.pos.copy(C0).lerp(C3, 0.5); Q.LAB.dy = -26;
+  Q.Lsx = label('+2','--x','small'); Q.Lsx.pos.copy(C0).lerp(C1, .5); Q.Lsx.dy = 18;
+  Q.Lsy = label('+3','--y','small'); Q.Lsy.pos.copy(C1).lerp(C2, .5); Q.Lsy.dy = -16; Q.Lsy.dx = 16;
+  Q.Lsz = label('−2','--z','small'); Q.Lsz.pos.copy(C2).lerp(C3, .5); Q.Lsz.dx = 22;
+  Q.Lt0 = label('<span class="m">t</span> = 0','--P','small'); Q.Lt0.pos.copy(C0); Q.Lt0.dy = 24;
+  Q.Lt1 = label('<span class="m">t</span> = 1','--P','small'); Q.Lt1.pos.copy(C3); Q.Lt1.dy = 24;
+  theme2 = (c, dark, blend) => {
+    Q.aCore.material.color = c('--A'); Q.aGlow.material.color = c('--A'); Q.aGlow.material.blending = blend;
+    Q.bCore.material.color = c('--B'); Q.bGlow.material.color = c('--B'); Q.bGlow.material.blending = blend;
+    Q.ab.userData.mat.color = c('--v');
+    Q.sx.material.color = c('--x'); Q.sy.material.color = c('--y'); Q.sz.material.color = c('--z');
+    Q.dots.forEach(sp => { sp.material.color = c('--P'); sp.material.blending = blend; });
+    Q.lineCore.material.color = dark ? new THREE.Color('#ffd1e8') : c('--P'); Q.lineGlow.material.color = c('--P'); Q.lineGlow.material.blending = blend;
+  };
+
+  // DOM
+  const titleEl = document.getElementById('title'), card = document.getElementById('card'), captxt = document.getElementById('captxt'), capEl = document.getElementById('caption');
+  const liveEl = document.getElementById('live'), countEl = document.getElementById('count');
+  const dA = document.getElementById('dA'), dv = document.getElementById('dv'), eqs = document.getElementById('eqs');
+  const eqsH = () => { const mh = eqs.style.maxHeight; eqs.style.maxHeight = 'none'; const h = eqs.scrollHeight; eqs.style.maxHeight = mh; return h; };
+  let capIdx = -2;
+
+  const $ = id => document.getElementById(id);
+  const title2 = $('title2'), card2 = $('card2'), d2A = $('d2A'), d2B = $('d2B'), vec2 = $('vec2'), eq2 = $('eq2'), sys2 = $('sys2');
+  const cc = [$('c0'),$('c1'),$('c2')], rr = [$('r0'),$('r1'),$('r2')], LL = [$('L0'),$('L1'),$('L2')], kk = [$('k0'),$('k1'),$('k2')];
+  const fPt = $('fPt'), live2 = $('live2'), count2 = $('count2');
+  const fullH = el => { const mh = el.style.maxHeight; el.style.maxHeight = 'none'; const h = el.scrollHeight; el.style.maxHeight = mh; return h; };
+  function grow(el, k){ el.style.maxHeight = k >= 1 ? 'none' : (fullH(el)*ease(k)) + 'px';
+    el.style.marginTop = el.style.paddingTop = k > 0 ? '' : '0'; el.style.borderTopWidth = k > 0 ? '' : '0'; }
+  let fromB = null;
+  function place(core, glw, pos, k){ core.visible = glw.visible = k > 0.001; core.position.copy(pos); glw.position.copy(pos);
+    core.scale.setScalar(Math.max(.001,k)); glw.scale.setScalar(glw.userData.size*Math.max(.001,k)); }
+  function part2(T){
+    const r = T - T2, on = r > -0.001;
+    title2.style.opacity = on ? clamp((r-1)/0.6)*(1-clamp((r-4.2)/0.6)) : 0;
+    // points A et B
+    place(Q.aCore, Q.aGlow, C0, on && r >= 5 ? back(clamp((r-5)/0.7)) : 0);
+    place(Q.bCore, Q.bGlow, C3, on && r >= 7.5 ? back(clamp((r-7.5)/0.7)) : 0);
+    const longL = r < 27;
+    if (longL !== Q.mode){ Q.mode = longL; Q.LA.el.innerHTML = longL ? Q.LAlong : Q.LAshort; Q.LB.el.innerHTML = longL ? Q.LBlong : Q.LBshort; Q.LA.dx = longL ? -62 : -22; Q.LB.dx = longL ? 64 : 22; }
+    Q.LA.a = on ? clamp((r-5.3)/0.5) : 0; Q.LB.a = on ? clamp((r-7.8)/0.5) : 0;
+    // vecteur AB
+    const kab = on ? ease(clamp((r-10)/1.5)) : 0, abA = r < 38 ? 1 : 1 - 0.65*clamp((r-38)/1.5);
+    setArrow(Q.ab, C0, C0.clone().lerp(C3, Math.max(kab, .001)), kab > 0 ? abA : 0);
+    Q.LAB.a = on ? clamp((r-11)/0.4)*abA : 0;
+    // décomposition en composantes
+    const stepFade = 1 - clamp((r-19)/1);
+    setSeg(Q.sx, C0, C1, on ? ease(clamp((r-12)/0.8)) : 0, 0.95*stepFade);
+    setSeg(Q.sy, C1, C2, on ? ease(clamp((r-13.8)/0.8)) : 0, 0.95*stepFade);
+    setSeg(Q.sz, C2, C3, on ? ease(clamp((r-15.6)/0.8)) : 0, 0.95*stepFade);
+    Q.Lsx.a = on ? clamp((r-12.6)/.3)*stepFade : 0; Q.Lsy.a = on ? clamp((r-14.4)/.3)*stepFade : 0; Q.Lsz.a = on ? clamp((r-16.2)/.3)*stepFade : 0;
+    // point choisi
+    const chA = r >= 20 && r < 27, chB = r >= 41;
+    Q.ring.visible = on && (chA || chB);
+    if (Q.ring.visible){ const pu = (T*1.1) % 1; Q.ring.position.copy(chA ? C0 : C3); Q.ring.lookAt(camera.position);
+      Q.ring.scale.setScalar(1 + pu*1.6); Q.ring.material.opacity = (1-pu)*0.9; Q.ring.material.color = new THREE.Color(css(chA ? '--A' : '--B')); }
+    // vérification et droite
+    const t = on ? pT2(T) : null;
+    if (t !== null){
+      const pf = clamp((r-28)/0.5)*(1-clamp((r-38)/1.5)), Pp = Mt2(t), P = at2(t);
+      pCore.visible = pGlow.visible = ring.visible = drop.visible = pf > 0.01;
+      pCore.position.copy(Pp); pGlow.position.copy(Pp); pGlow.material.opacity = pf; pCore.scale.setScalar(Math.max(.001,pf));
+      ring.position.copy(Pp); ring.lookAt(camera.position); const pu = (T*1.1) % 1; ring.scale.setScalar(1 + pu*1.4); ring.material.opacity = (1-pu)*0.8*pf;
+      drop.geometry.setFromPoints([M(P[0],P[1],0), Pp]); drop.computeLineDistances(); drop.material.opacity = .5*pf;
+      LP.pos.copy(Pp); LP.a = pf;
+      setArrow(tvArrow, C0, Pp, pf*(1-clamp((r-32.5)/1)));
+    }
+    let n = 0; const merge = on ? clamp((r-37.5)/2.5) : 0;
+    dots2.forEach((d,i) => { const sp = Q.dots[i], k = T - d.time; if (!on || k < 0){ sp.visible = false; return; } n++;
+      sp.visible = true; const pop = k < 0.45 ? 1 + 1.3*(1 - k/0.45) : 1;
+      sp.scale.setScalar(sp.userData.size*pop*(1 - 0.45*merge)); sp.material.opacity = 1 - 0.55*merge; });
+    const kt0 = T - dots2[0].time, kt1 = T - dots2[1].time;
+    Q.Lt0.a = on && kt0 >= 0 ? clamp(kt0/.3)*(1-clamp((r-33)/1.2)) : 0; Q.Lt1.a = on && kt1 >= 0 ? clamp(kt1/.3)*(1-clamp((r-33)/1.2)) : 0;
+    [Q.lineCore, Q.lineGlow].forEach((m,i) => { m.visible = merge > 0; m.material.opacity = (i ? 0.35 : 0.95)*merge; m.scale.y = m.userData.len*Math.max(.001, ease(merge)); });
+    // panneau
+    const ca = on ? clamp((r-5.2)/0.6) : 0;
+    card2.style.opacity = ca; card2.style.transform = 'translateY(' + (1-ca)*12 + 'px)'; card2.style.visibility = ca > 0 ? 'visible' : 'hidden';
+    d2A.style.opacity = ca; d2B.style.opacity = on ? clamp((r-7.7)/0.5) : 0;
+    grow(vec2, on ? clamp((r-11.2)/0.8) : 0); vec2.style.opacity = on ? clamp((r-11.5)/0.6) : 0;
+    [12.2, 13.9, 15.7].forEach((s0,i) => { cc[i].style.opacity = on ? clamp((r-s0)/0.4) : 0; rr[i].style.opacity = on ? clamp((r-s0-0.7)/0.4) : 0; });
+    grow(eq2, on ? clamp((r-20.2)/0.8) : 0); eq2.style.opacity = on ? clamp((r-20.4)/0.6) : 0;
+    const swap = 1 - clamp((r-40.6)/0.4) + clamp((r-41)/0.4);
+    [22.5, 24, 25.5].forEach((s0,i) => { LL[i].style.opacity = (on ? clamp((r-s0)/0.5) : 0) * Math.min(1, swap); });
+    fPt.style.opacity = Math.min(1, swap);
+    const useB = r >= 41;
+    if (useB !== fromB){ fromB = useB; const src = useB ? B2 : A2, cls = useB ? 'cB' : 'cA';
+      fPt.textContent = useB ? 'B' : 'A'; fPt.className = 'm ' + cls; kk.forEach((el,i) => { el.textContent = src[i]; el.className = cls; }); }
+    if (on && r >= 39){ live2.innerHTML = '<span class="m cP">t</span> ∈ ℝ &nbsp;: tous les points de la droite (AB)'; count2.innerHTML = 'points tracés : <b>une infinité</b>'; }
+    else if (t !== null){ const P = at2(t); live2.innerHTML = '<span class="m cP">t</span> = ' + num(t) + ' donne <b>P(' + num(P[0]) + ' ; ' + num(P[1]) + ' ; ' + num(P[2]) + ')</b>';
+      count2.innerHTML = Math.abs(t) < 0.005 ? 'c\u2019est le point <b class="cA">A</b>' : Math.abs(t-1) < 0.005 ? 'c\u2019est le point <b class="cB">B</b>' : 'points tracés : <b>' + n + '</b>'; }
+    else { live2.innerHTML = '&nbsp;'; count2.innerHTML = '&nbsp;'; }
+  }
+
+  function renderAt(T){
+    cameraAt(T);
+    // titre
+    const tA = clamp(T/0.6) * (1 - clamp((T-2.6)/0.6));
+    titleEl.style.opacity = tA;
+    // axes
+    growAxis(axX, ease(clamp((T-1.2)/1.4))); growAxis(axY, ease(clamp((T-1.5)/1.4))); growAxis(axZ, ease(clamp((T-1.8)/1.4)));
+    Lx.a = clamp((T-2.4)/0.5); Ly.a = clamp((T-2.7)/0.5); Lz.a = clamp((T-3)/0.5);
+    if (grid) grid.visible = T > 0.8, grid.material.opacity = (isDark() ? .45 : .7) * clamp((T-0.8)/1.5);
+    // A
+    const a = T < 3 ? 0 : back(clamp((T-3)/0.7));
+    aCore.visible = aGlow.visible = a > 0; aCore.position.copy(M(1,2,1)); aGlow.position.copy(aCore.position);
+    const p1 = 1 - clamp((T-46)/1.5);
+    aCore.visible = aGlow.visible = a*p1 > 0.001;
+    aCore.scale.setScalar(Math.max(.001,a*p1)); aGlow.scale.setScalar(aGlow.userData.size * Math.max(.001,a*p1)); LA.a = clamp((T-3.3)/0.5)*p1;
+    // v
+    const vk = ease(clamp((T-6.5)/1.5)), vFade = 1 - clamp((T-36)/1.5);
+    setArrow(vArrow, M(1,2,1), Mt(vk), vk > 0 ? vFade : 0);
+    Lv.pos.copy(Mt(vk)); Lv.a = clamp((T-7.6)/0.4) * vFade;
+    // P
+    const t = pT(T), showP = t !== null;
+    const pFade = showP ? clamp((T-10.5)/0.5) * (1 - clamp((T-36)/1.5)) : 0;
+    pCore.visible = pGlow.visible = ring.visible = drop.visible = pFade > 0.01;
+    if (showP){
+      const Pp = Mt(t), P = at(t);
+      pCore.position.copy(Pp); pGlow.position.copy(Pp); pGlow.material.opacity = pFade; pCore.scale.setScalar(Math.max(.001,pFade));
+      ring.position.copy(Pp); ring.lookAt(camera.position);
+      const pulse = ((T*1.1) % 1); ring.scale.setScalar(1 + pulse*1.4); ring.material.opacity = (1-pulse) * 0.8 * pFade;
+      drop.geometry.setFromPoints([M(P[0],P[1],0), Pp]); drop.computeLineDistances(); drop.material.opacity = .5*pFade;
+      LP.pos.copy(Pp); LP.a = pFade;
+      const tvA = pFade * (1 - clamp((T-25)/1));
+      setArrow(tvArrow, M(1,2,1), Pp, tvA);
+    } else { tvArrow.visible = false; LP.a = 0; }
+    // points déposés
+    let n = 0;
+    const merge = clamp((T-36)/2.5);
+    dots.forEach((d,i) => { const s = dotSprites[i], k = T - d.time;
+      if (k < 0 || p1 <= 0){ s.visible = false; return; } n++;
+      s.visible = true;
+      const pop = k < 0.45 ? 1 + 1.3*(1 - k/0.45) : 1;
+      s.scale.setScalar(s.userData.size * pop * (1 - 0.45*merge));
+      s.material.opacity = (1 - 0.55*merge)*p1; });
+    dotLabels.forEach(l => { const k = T - l.t.time; l.a = k < 0 ? 0 : clamp(k/0.3) * (1 - clamp((T-25)/1.2)); });
+    // droite
+    lineCore.material.opacity = 0.95*merge*p1; lineGlow.material.opacity = 0.35*merge*p1;
+    lineCore.visible = lineGlow.visible = merge*p1 > 0;
+    lineCore.scale.y = lineGlow.scale.y = Mt(3.3).distanceTo(Mt(-3)) * Math.max(.001, ease(merge));
+    // carte
+    const long = T < 12.5;
+    if (long !== labelMode){ labelMode = long; LA.el.innerHTML = long ? LA_long : LA_short; Lv.el.innerHTML = long ? Lv_long : Lv_short; LA.dx = long ? -62 : -26; Lv.dx = long ? 52 : 0; }
+    const cA = clamp((T-3.6)/0.6);
+    card.style.opacity = cA*p1; card.style.visibility = cA*p1 > 0 ? 'visible' : 'hidden'; card.style.transform = 'translateY(' + (1-cA)*12 + 'px)';
+    dA.style.opacity = clamp((T-3.6)/0.5); dv.style.opacity = clamp((T-7.9)/0.5); const ek = clamp((T-9.3)/0.8); eqs.style.opacity = clamp((T-9.6)/0.6);
+    eqs.style.maxHeight = ek >= 1 ? 'none' : (eqsH()*ease(ek)) + 'px';
+    eqs.style.marginTop = eqs.style.paddingTop = ek > 0 ? '' : '0'; eqs.style.borderTopWidth = ek > 0 ? '' : '0';
+    if (T >= 37){ liveEl.innerHTML = '<span class="m cP">t</span> ∈ ℝ &nbsp;: tous les points de la droite'; countEl.innerHTML = 'points tracés : <b>une infinité</b>'; }
+    else if (showP){ const P = at(t); liveEl.innerHTML = '<span class="m cP">t</span> = ' + num(t) + ' donne <b>P(' + num(P[0]) + ' ; ' + num(P[1]) + ' ; ' + num(P[2]) + ')</b>';
+      countEl.innerHTML = 'points tracés : <b>' + n + '</b>'; }
+    else { liveEl.innerHTML = '&nbsp;'; countEl.innerHTML = '&nbsp;'; }
+    // légende
+    let ci = -1; caps.forEach((c,i) => { if (T >= c[0]) ci = i; });
+    if (ci !== capIdx){ capIdx = ci; captxt.innerHTML = ci >= 0 ? caps[ci][1] : ''; }
+    const since = ci >= 0 ? T - caps[ci][0] : 0;
+    capEl.style.opacity = ci >= 0 && caps[ci][1] ? 1 : 0;
+    captxt.style.opacity = clamp(since/0.35); captxt.style.transform = 'translateY(' + (1-clamp(since/0.35))*10 + 'px)';
+    part2(T);
+    renderer.render(scene, camera);
+    placeLabels();
+  }
+
+  function resize(){ const w = stage.clientWidth, h = stage.clientHeight; if (!w || !h) return;
+    renderer.setSize(w, h, false); camera.aspect = w/h; camera.fov = w/h < 1 ? 52 : 31;
+    if (w/h >= 1) camera.setViewOffset(w, h, w*0.12, h*0.06, w, h); else camera.setViewOffset(w, h, 0, -h*0.04, w, h);
+    camera.updateProjectionMatrix(); }
+  new ResizeObserver(resize).observe(stage); resize();
+  applyTheme();
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
+  new MutationObserver(applyTheme).observe(document.documentElement, {attributes:true, attributeFilter:['data-theme']});
+
+  if (REC){ window.renderAt = T => { resize(); renderAt(T/SLOW); }; window.END = END*SLOW; return; }
+
+
+  // ---------- son (Web Audio, synthétisé en direct) ----------
+  const AU = { ctx:null, on:false, master:null, last:-0.001, noise:null };
+  const midi = m => 440*Math.pow(2,(m-69)/12);
+  const CHORDS = [[48,55,60,64,71],[45,52,57,60,67],[41,48,53,57,64],[43,50,55,62,65]];
+  const CHS = 6/SLOW, ARP = 0.375/SLOW;
+  function auInit(){
+    const C = new (window.AudioContext || window.webkitAudioContext)();
+    const comp = C.createDynamicsCompressor(); comp.threshold.value = -14; comp.ratio.value = 4; comp.connect(C.destination);
+    const m = C.createGain(); m.gain.value = 0; m.connect(comp);
+    const nb = C.createBuffer(1, C.sampleRate*2, C.sampleRate), d = nb.getChannelData(0);
+    for (let i=0;i<d.length;i++) d[i] = Math.random()*2-1;
+    AU.ctx = C; AU.master = m; AU.noise = nb;
+  }
+  function out(pan){ const C = AU.ctx; if (!C.createStereoPanner) return AU.master; const p = C.createStereoPanner(); p.pan.value = pan||0; p.connect(AU.master); return p; }
+  function pad(k){
+    const C = AU.ctx, t = C.currentTime, notes = CHORDS[k%4], dur = 8.5;
+    const lp = C.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1300;
+    const g = C.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.028, t+2.2); g.gain.setValueAtTime(0.025, t+dur-2.4); g.gain.linearRampToValueAtTime(0.0001, t+dur);
+    lp.connect(g); g.connect(out(0));
+    notes.forEach(n => { const f = n < 50 ? midi(n+12) : midi(n);
+      [-12, 0, 13].forEach(det => { const o = C.createOscillator(); o.type = 'triangle'; o.frequency.value = f; o.detune.value = det; o.connect(lp); o.start(t); o.stop(t+dur); }); });
+    const b = C.createOscillator(), bg = C.createGain(); b.frequency.value = midi(notes[0]-12);
+    bg.gain.setValueAtTime(0.0001, t); bg.gain.linearRampToValueAtTime(0.09, t+1); bg.gain.linearRampToValueAtTime(0.0001, t+7);
+    b.connect(bg); bg.connect(out(0)); b.start(t); b.stop(t+7);
+  }
+  function tone(f, vol, decay, pan, type, start){
+    const C = AU.ctx, t = start || C.currentTime, o = C.createOscillator(), g = C.createGain();
+    vol = Math.max(vol, 0.0002); o.type = type || 'sine'; o.frequency.value = f;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t+0.004); g.gain.exponentialRampToValueAtTime(0.0001, t+decay);
+    o.connect(g); g.connect(out(pan)); o.start(t); o.stop(t+decay+0.05); return o;
+  }
+  function pop(f, big, pan){
+    const C = AU.ctx, t = C.currentTime, d = big ? 0.16 : 0.09;
+    const o = tone(f, big ? 0.35 : 0.18, d, pan);
+    o.frequency.setValueAtTime(f*1.9, t); o.frequency.exponentialRampToValueAtTime(f, t+0.05);
+    tone(f*2, big ? 0.08 : 0.04, d*0.7, pan);
+  }
+  function chime(f, vol, pan){ [[1,1,2.2],[2.01,.45,1.4],[3.02,.2,0.9],[4.1,.12,0.6]].forEach(([h,a,dd]) => tone(f*h, vol*a, dd, pan)); }
+  function whoosh(dur, f0, f1, vol, pan){
+    const C = AU.ctx, t = C.currentTime, src = C.createBufferSource(); src.buffer = AU.noise; src.loop = true;
+    const bp = C.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 1.2;
+    bp.frequency.setValueAtTime(f0, t); bp.frequency.exponentialRampToValueAtTime(f1, t+dur);
+    const g = C.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t+dur*0.5); g.gain.linearRampToValueAtTime(0.0001, t+dur);
+    src.connect(bp); bp.connect(g); g.connect(out(pan)); src.start(t); src.stop(t+dur+0.05);
+  }
+  const PENTA = [0,2,4,7,9];
+  const noteFor = tv => { const i = Math.round((tv+2.5)/5.4*11); return 72 + 12*Math.floor(i/5) + PENTA[i%5]; };
+  const FX = [
+    [1.6/SLOW, () => whoosh(2.8, 300, 2500, 0.25, 0)],
+    [3,        () => chime(midi(84), 0.12, -0.2)],
+    [9.6/SLOW, () => whoosh(2.4, 600, 4000, 0.2, 0.2)],
+    [11.9/SLOW,() => chime(midi(91), 0.06, 0.25)],
+    [10.5,     () => chime(midi(88), 0.08, 0)],
+    [53.6/SLOW,() => whoosh(3.8, 200, 6000, 0.3, 0)]
+  ];
+  [72,76,79,84,88].forEach((m,j) => FX.push([55.2/SLOW + j*0.08, () => chime(midi(m), 0.06, -0.4+0.2*j)]));
+  dots.forEach(d => FX.push([d.time, () => pop(midi(noteFor(d.t)), d.big, Math.max(-0.6, Math.min(0.6, d.t/3)))]));
+  const noteFor2 = tv => { const i = Math.round((tv+1.2)/2.6*9); return 72 + 12*Math.floor(i/5) + PENTA[i%5]; };
+  [[T2+1, () => whoosh(2.5, 400, 3000, 0.2, 0)], [T2+5, () => chime(midi(84), 0.12, -0.2)], [T2+7.5, () => chime(midi(88), 0.12, 0.25)],
+   [T2+10, () => whoosh(2.2, 600, 4000, 0.2, 0.1)], [T2+12, () => chime(midi(79), 0.07, -0.3)], [T2+13.8, () => chime(midi(81), 0.07, 0)],
+   [T2+15.6, () => chime(midi(84), 0.07, 0.3)], [T2+17.5, () => chime(midi(91), 0.06, 0)], [T2+20, () => chime(midi(84), 0.08, -0.2)],
+   [T2+22.5, () => pop(midi(72), true, -0.2)], [T2+24, () => pop(midi(76), true, 0)], [T2+25.5, () => pop(midi(79), true, 0.2)],
+   [T2+37.5, () => whoosh(3.8, 200, 6000, 0.3, 0)], [T2+41, () => chime(midi(88), 0.1, 0.25)]].forEach(e => FX.push(e));
+  [72,76,79,84,88].forEach((m,j) => FX.push([T2+39 + j*0.08, () => chime(midi(m), 0.06, -0.4+0.2*j)]));
+  dots2.forEach(d => FX.push([d.time, () => pop(midi(noteFor2(d.t)), d.big, Math.max(-0.6, Math.min(0.6, (d.t-0.5)/2)))]));
+  function audioTick(a, b){
+    if (!AU.on || b <= a) return;
+    FX.forEach(([tm, fn]) => { if (tm > a && tm <= b) fn(); });
+    const k0 = Math.floor(a/CHS), k1 = Math.floor(b/CHS);
+    if (k1 > k0 && b < END - 1) pad(k1);
+    if (b > 4 && b < END - 2){
+      const i0 = Math.floor(a/ARP), i1 = Math.floor(b/ARP);
+      for (let i=i0+1;i<=i1;i++){ const notes = CHORDS[Math.floor(i*ARP/CHS)%4], pat = [notes[1],notes[2],notes[3],notes[4],notes[3],notes[2]];
+        const fade = Math.min(1, (i*ARP-4)/3); tone(midi(pat[i%6]+12), 0.045*fade, 1.0, 0.35*Math.sin(i*0.9)); }
+    }
+  }
+  function masterTo(v){ if (!AU.ctx) return; const t = AU.ctx.currentTime; AU.master.gain.cancelScheduledValues(t); AU.master.gain.setTargetAtTime(v, t, 0.15); }
+
+  // ---------- voix off (synthèse vocale du navigateur) ----------
+  const VOICE = [
+    [0.3,  "La droite dans l'espace, construite point par point."],
+    [3,    "On part d'un point A, de coordonnées un, deux, un."],
+    [6.5,  "On choisit une direction : le vecteur v, de composantes deux, un, un."],
+    [9.5,  "Chaque valeur du paramètre t donne un point P, égal à A plus t fois v."],
+    [12,   "Pour t égal zéro, zéro virgule cinq, un, un virgule cinq, deux… à chaque valeur, on place un nouveau point."],
+    [20,   "Avec t négatif, on part dans l'autre sens."],
+    [25.5, "Plus on prend de valeurs de t, plus les points se serrent…"],
+    [36,   "… et avec tous les nombres réels t, ils forment la droite."],
+    [T2+1, "Partie deux. Trouver les équations à partir de deux points."],
+    [T2+4.8, "On connaît deux points de la droite : A, de coordonnées un, un, trois…"],
+    [T2+7.5, "… et B, de coordonnées trois, quatre, un."],
+    [T2+10,  "Le vecteur A B donne la direction de la droite."],
+    [T2+11.8,"On le calcule : coordonnées de B moins coordonnées de A. Trois moins un, quatre moins un, un moins trois."],
+    [T2+17.5,"On obtient un vecteur directeur : v, égal à A B, de composantes deux, trois, moins deux."],
+    [T2+20,  "On choisit un des deux points, par exemple A."],
+    [T2+22.3,"On compose les équations : les coordonnées de A, plus les composantes de v fois t."],
+    [T2+28,  "Vérification : pour t égal zéro, on retrouve le point A…"],
+    [T2+30.5,"… et pour t égal un, on arrive sur le point B."],
+    [T2+33,  "Toutes les valeurs de t forment la droite A B."],
+    [T2+40,  "On peut aussi partir de B : on obtient la même droite, avec une autre écriture."]
+  ];
+  const VO = { on:false, busy:false, voice:null, supported: 'speechSynthesis' in window };
+  function pickVoice(){ if (!VO.supported) return; const vs = speechSynthesis.getVoices().filter(v => /^fr/i.test(v.lang)); if (!vs.length) return;
+    const score = v => (/natural|online|neural/i.test(v.name) ? 8 : 0) + (/google/i.test(v.name) ? 4 : 0) + (/fr-CH/i.test(v.lang) ? 2 : 0) + (/fr-FR/i.test(v.lang) ? 1 : 0) + (v.localService ? 0 : 1);
+    VO.voice = vs.sort((a,b) => score(b) - score(a))[0]; }
+  if (VO.supported){ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+  function say(text){ if (!VO.supported) return; speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text);
+    u.lang = VO.voice ? VO.voice.lang : 'fr-FR'; if (VO.voice) u.voice = VO.voice; u.rate = 0.95; u.pitch = 1;
+    u.onstart = () => { VO.busy = true; if (AU.on) masterTo(0.4); };
+    u.onend = u.onerror = () => { VO.busy = false; if (AU.on && playing) masterTo(0.9); };
+    VO.busy = true; VO.until = performance.now() + (text.length*0.085/0.95 + 2)*1000; speechSynthesis.speak(u); }
+  function hush(){ if (VO.supported) speechSynthesis.cancel(); VO.busy = false; }
+  function voiceTick(a, b){ if (!VO.on || b <= a) return; for (const [tm, txt] of VOICE){ if (tm > a && tm <= b){ say(txt); } } }
+  // tant que la voix parle, l'animation attend avant l'étape suivante
+  function holdForVoice(prev, next){ if (!VO.on || !VO.busy || performance.now() > VO.until) return next; for (const [tm] of VOICE){ if (tm > prev && tm <= next) return Math.max(prev, tm - 0.001); } return next; }
+  let T = 0, playing = true, last = performance.now();
+  const soundBtn = document.getElementById('sound'), voiceBtn = document.getElementById('voice');
+  const pauseBtn = document.getElementById('pause'), replayBtn = document.getElementById('replay');
+  pauseBtn.addEventListener('click', () => { if (T >= END){ T = -0.001; playing = true; hush(); } else playing = !playing; pauseBtn.textContent = playing ? 'Pause' : 'Lecture'; if (VO.supported){ if (playing) speechSynthesis.resume(); else speechSynthesis.pause(); } if (AU.on) masterTo(playing ? 0.9 : 0); });
+  replayBtn.addEventListener('click', () => { hush(); T = -0.001; playing = true; userMoved = false; ROT.on = false; ROT.clock = 0; ROT.az = 0; ROT.el = ROT.r = null; setRotBtn(); pauseBtn.textContent = 'Pause'; if (AU.on) masterTo(0.9); });
+  const rotBtn = document.getElementById('rot');
+  function setRotBtn(){ rotBtn.textContent = 'Rotation auto : ' + (ROT.on ? 'oui' : 'non'); rotBtn.setAttribute('aria-pressed', ROT.on); }
+  window.__rotBtn = setRotBtn;
+  rotBtn.addEventListener('click', () => {
+    if (ROT.on){ ROT.on = false; userMoved = true; }
+    else {
+      // reprendre la rotation depuis l'angle actuel, sans saut
+      const d = camera.position.clone().sub(controls.target), r = d.length();
+      ROT.r = r; ROT.el = Math.asin(d.y / r);
+      const intro = 1 - ease(clamp(T/5));
+      ROT.az = Math.atan2(d.x, d.z) - (baseAz + 0.5*intro + (reduce ? 0 : ROT.clock*2*Math.PI/40));
+      target.copy(controls.target); userMoved = false; ROT.on = true;
+    }
+    setRotBtn();
+  });
+  const seekEl = document.getElementById('seek'), clockEl = document.getElementById('clock');
+  seekEl.max = (END*SLOW).toFixed(1);
+  let skipAudio = false, dragging = false;
+  const mmss = x => { x = Math.max(0, Math.round(x)); return Math.floor(x/60) + ':' + String(x%60).padStart(2,'0'); };
+  function jump(realSec){
+    T = Math.max(0, Math.min(END, realSec/SLOW)); skipAudio = true; hush();
+    if (T >= END){ playing = false; pauseBtn.textContent = 'Lecture'; }
+    if (AU.on && playing && T < END - 1) pad(Math.floor(T/CHS));
+  }
+  const seekBox = seekEl.parentElement;
+  seekEl.addEventListener('pointerdown', () => { dragging = true; seekBox.classList.add('drag'); });
+  window.addEventListener('pointerup', () => { if (dragging) seekEl.blur(); dragging = false; seekBox.classList.remove('drag'); });
+  seekEl.addEventListener('input', () => jump(parseFloat(seekEl.value)));
+  document.addEventListener('keydown', e => {
+    if (e.target.tagName === 'BUTTON' && (e.key === ' ' || e.key === 'Enter')) return;
+    if (e.target === seekEl && e.key.startsWith('Arrow')) return;
+    if (e.key === ' '){ e.preventDefault(); pauseBtn.click(); }
+    else if (e.key === 'ArrowLeft'){ jump(T*SLOW - 5); }
+    else if (e.key === 'ArrowRight'){ jump(T*SLOW + 5); }
+  });
+  soundBtn.addEventListener('click', () => {
+    if (!AU.ctx) auInit();
+    AU.ctx.resume();
+    AU.on = !AU.on;
+    soundBtn.textContent = AU.on ? 'Couper le son' : 'Activer le son'; soundBtn.setAttribute('aria-pressed', AU.on);
+    masterTo(AU.on && playing ? 0.9 : 0);
+    if (AU.on && T < END - 1) pad(Math.floor(T/CHS));
+  });
+  voiceBtn.addEventListener('click', () => {
+    if (!VO.supported){ voiceBtn.textContent = 'Voix indisponible'; return; }
+    VO.on = !VO.on; voiceBtn.textContent = VO.on ? 'Couper la voix' : 'Activer la voix'; voiceBtn.setAttribute('aria-pressed', VO.on);
+    if (!VO.on){ hush(); if (AU.on && playing) masterTo(0.9); return; }
+    pickVoice();
+    if (T < 0.3){ say(VOICE[0][1]); T = 0.301; }
+    else { let cur = null; for (const v of VOICE){ if (v[0] <= T) cur = v; } if (cur && T - cur[0] < 3) say(cur[1]); }
+  });
+  function loop(now){
+    const dt = Math.min(0.1, (now-last)/1000); last = now;
+    const prevT = T;
+    if (ROT.on) ROT.clock += dt/SLOW;
+    if (playing){ T = holdForVoice(prevT, Math.min(END, T + dt/SLOW)); if (T >= END){ playing = false; pauseBtn.textContent = 'Lecture'; } }
+    if (skipAudio){ skipAudio = false; } else { audioTick(prevT, T); voiceTick(prevT, T); }
+    if (!dragging) seekEl.value = (T*SLOW).toFixed(1);
+    clockEl.textContent = mmss(T*SLOW) + ' / ' + mmss(END*SLOW);
+    renderAt(T);
+    requestAnimationFrame(loop);
+  }
+  const _cameraAt = cameraAt;
+  cameraAt = function(T){ if (userMoved){ controls.update(); return; } _cameraAt(T); controls.target.copy(target); };
+  requestAnimationFrame(loop);
+})();
+</script>
+<script>if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js');</script>
+</body>
+</html>
